@@ -1,0 +1,138 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-void: #091413;
+  --color-forest: #285a48;
+  --color-emerald: #408a71;
+  --color-mint: #b0e4cc;
+  --color-surface: #0d1c1a;
+  --color-border: rgba(64, 138, 113, 0.25);
+  --color-muted: rgba(176, 228, 204, 0.55);
+  --color-text: #b0e4cc;
+
+  --color-void-light: #f0faf5;
+  --color-forest-light: #d6f0e4;
+  --color-surface-light: #e4f5ee;
+  --color-border-light: rgba(40, 90, 72, 0.2);
+  --color-muted-light: #285a48;
+  --color-text-light: #091413;
+
+  --color-void-rgb: 9 20 19;
+  --color-forest-rgb: 40 90 72;
+  --color-emerald-rgb: 64 138 113;
+  --color-mint-rgb: 176 228 204;
+  --color-surface-rgb: 13 28 26;
+  --color-border-rgb: 64 138 113;
+  --color-muted-rgb: 176 228 204;
+  --color-text-rgb: 176 228 204;
+}
+
+html.dark {
+  --color-void: #091413;
+  --color-forest: #285a48;
+  --color-emerald: #408a71;
+  --color-mint: #b0e4cc;
+  --color-surface: #0d1c1a;
+  --color-border: rgba(64, 138, 113, 0.25);
+  --color-muted: rgba(176, 228, 204, 0.55);
+  --color-text: #b0e4cc;
+}
+
+html.light {
+  --color-void: var(--color-void-light);
+  --color-forest: var(--color-forest-light);
+  --color-emerald: #408a71;
+  --color-mint: #b0e4cc;
+  --color-surface: var(--color-surface-light);
+  --color-border: var(--color-border-light);
+  --color-muted: var(--color-muted-light);
+  --color-text: var(--color-text-light);
+
+  --color-void-rgb: 240 250 245;
+  --color-forest-rgb: 214 240 228;
+  --color-emerald-rgb: 64 138 113;
+  --color-mint-rgb: 176 228 204;
+  --color-surface-rgb: 228 245 238;
+  --color-border-rgb: 40 90 72;
+  --color-muted-rgb: 40 90 72;
+  --color-text-rgb: 9 20 19;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply text-muted;
+    background-color: var(--color-void);
+    background-image: radial-gradient(circle at 15% 10%, rgba(40, 90, 72, 0.3), transparent 40%);
+    color: var(--color-muted);
+  }
+
+  html.light body {
+    background-image: radial-gradient(circle at 15% 10%, rgba(40, 90, 72, 0.12), transparent 45%);
+  }
+}
+
+@layer components {
+  .glass-card {
+    background: rgba(40, 90, 72, 0.15);
+    @apply backdrop-blur-xl border rounded-2xl;
+    -webkit-backdrop-filter: blur(16px);
+    border-color: var(--color-border);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  html.light .glass-card {
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 8px 24px rgba(40, 90, 72, 0.08);
+  }
+  
+  .glass-input {
+    background: rgba(40, 90, 72, 0.15);
+    @apply backdrop-blur-xl border rounded-xl;
+    -webkit-backdrop-filter: blur(16px);
+    border-color: var(--color-border);
+  }
+
+  html.light .glass-input {
+    background: rgba(255, 255, 255, 0.82);
+  }
+  
+  .glass-button {
+    @apply bg-emerald text-void hover:bg-emerald/90 border border-border;
+  }
+  
+  .gradient-text {
+    @apply font-medium;
+    color: var(--color-mint);
+  }
+
+  html.light .gradient-text {
+    color: var(--color-text);
+  }
+
+  .heading-text {
+    @apply font-medium;
+    color: var(--color-mint);
+  }
+
+  html.light .heading-text {
+    color: var(--color-text);
+  }
+
+  .muted-text {
+    color: var(--color-muted);
+  }
+
+  html.light .glass-button {
+    border-color: rgba(40, 90, 72, 0.28);
+  }
+
+  .accent-icon {
+    @apply text-mint;
+  }
+}
