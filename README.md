@@ -1,230 +1,164 @@
 # Postcraft
 
-AI-powered content creation for X posts across any niche. Generate posts in your unique voice with style fingerprinting, thread support, and smart suggestions.
+Postcraft is a multi-user X post generator for any niche. It uses each user's style profile to produce posts and threads that feel like their own voice.
 
 ## Features
 
-- **Style Profile System**: Analyzes your writing style to generate authentic-sounding posts
-- **Generation Modes**: Prompted input or AI-suggested trending topics
-- **Thread Support**: Create multi-tweet threads with drag-and-drop reordering
-- **Tone Control**: Professional, Casual, or Edgy tones
-- **Smart Suggestions**: Alternative hooks and relevant hashtags
-- **Draft Management**: Auto-save, pin, search, and filter your drafts
-- **Modern UI**: Beautiful dark theme with custom color palette
+- Style profile onboarding from sample posts
+- Prompted generation and AI-suggested topics
+- Single post or thread mode (3-7 tweets)
+- Tone control (Professional, Casual, Edgy)
+- Hook and hashtag suggestions after generation
+- Auto-saved post history with pin and delete actions
+- NextAuth Google login with server-side user isolation
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- Tailwind CSS with CSS variable theme tokens
+- NextAuth (Google OAuth)
+- NVIDIA NIM (default) or Anthropic Claude
+- Vercel KV (source of truth) + localStorage cache
 
 ## Quick Start
 
 ### Prerequisites
 
-- Node.js 18+ 
-- NVIDIA NIM API key (free) or Anthropic API key
+- Node.js 18+
+- Google OAuth credentials
+- NVIDIA NIM API key or Anthropic API key
+- Vercel KV credentials
 
 ### Installation
 
 ```bash
-# Install dependencies
 npm install
-
-# Set up environment variables
 cp .env.local.example .env.local
-# Edit .env.local with your API keys
 ```
 
-### Environment Variables
+Edit `.env.local` and set:
 
 ```env
-NIM_API_KEY=your_nvidia_nim_api_key
 AI_PROVIDER=nim
-ANTHROPIC_API_KEY=your_anthropic_api_key  # Optional fallback
-NEXTAUTH_SECRET=openssl_rand_base64_32
+NIM_API_KEY=your_nvidia_nim_api_key
+ANTHROPIC_API_KEY=your_anthropic_api_key
+
+NEXTAUTH_SECRET=your_random_secret
 NEXTAUTH_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+
 KV_REST_API_URL=your_vercel_kv_rest_api_url
 KV_REST_API_TOKEN=your_vercel_kv_rest_api_token
 ```
 
-### Getting API Keys
+Generate a strong NextAuth secret:
 
-**NVIDIA NIM (Free):**
-1. Go to [build.nvidia.com](https://build.nvidia.com)
-2. Sign up for the free Developer Program
-3. Get your API key from the dashboard
-
-**Anthropic Claude (Optional):**
-1. Go to [console.anthropic.com](https://console.anthropic.com)
-2. Create an API key
-
-**Google OAuth (Required for login):**
-1. Open Google Cloud Console
-2. Create OAuth Web credentials
-3. Add authorized redirect URI: `/api/auth/callback/google`
-4. Copy Client ID and Client Secret
-
-**NextAuth Secret:**
 ```bash
 openssl rand -base64 32
 ```
 
-### Development
+### Run Locally
 
 ```bash
-# Start development server
 npm run dev
-
-# Open http://localhost:3000
 ```
 
-### Build
+Open `http://localhost:3000`.
+
+### Quality Checks
 
 ```bash
-# Create production build
+npm run lint
 npm run build
-
-# Start production server
-npm start
 ```
 
-## Deployment
+## OAuth Setup (Google)
 
-### Vercel Deployment
+In Google Cloud Console, create an OAuth Web Client and add redirect URIs:
 
-1. **Install Vercel CLI:**
-   ```bash
-   npm i -g vercel
-   ```
+- Local: `http://localhost:3000/api/auth/callback/google`
+- Production: `https://<your-domain>/api/auth/callback/google`
 
-2. **Deploy:**
-   ```bash
-   vercel
-   ```
+Also set `NEXTAUTH_URL` to the same base URL for each environment.
 
-3. **Configure Environment Variables:**
-   - Go to your Vercel project dashboard
-   - Settings → Environment Variables
-   - Add `NIM_API_KEY`, `AI_PROVIDER`, and optionally `ANTHROPIC_API_KEY`
+## Deployment (Vercel)
 
-4. **Configure Vercel KV:**
-   - Go to your Vercel project dashboard
-   - Storage → Create Database → KV
-   - Select Redis (Upstash) free tier
-   - Connect to your project
+1. Import this repo into Vercel.
+2. Configure environment variables for Production (and Preview if needed):
+   - `AI_PROVIDER`
+   - `NIM_API_KEY` (if `AI_PROVIDER=nim`)
+   - `ANTHROPIC_API_KEY` (if `AI_PROVIDER=claude`)
+   - `NEXTAUTH_SECRET`
+   - `NEXTAUTH_URL`
+   - `GOOGLE_CLIENT_ID`
+   - `GOOGLE_CLIENT_SECRET`
+   - `KV_REST_API_URL`
+   - `KV_REST_API_TOKEN`
+3. Attach Vercel KV to the project.
+4. Deploy.
 
-### Environment Variables for Production
+## Routes
 
-Make sure these are set in your Vercel dashboard:
-- `NIM_API_KEY` - Your NVIDIA NIM API key
-- `AI_PROVIDER` - Set to `nim` or `claude`
-- `ANTHROPIC_API_KEY` - Only if using Claude fallback
-- `NEXTAUTH_SECRET` - Random secret string
-- `NEXTAUTH_URL` - Your Vercel app URL
-- `GOOGLE_CLIENT_ID` - Google OAuth Client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth Client Secret
+- `/` - Generation dashboard
+- `/login` - Google sign-in page
+- `/style-setup` - Style profile onboarding
+- `/history` - Saved post history
+- `/drafts` - Legacy route that redirects to `/history`
+
+## API Routes
+
+- `/api/auth/[...nextauth]`
+- `/api/generate`
+- `/api/analyze-style`
+- `/api/suggest-topics`
+- `/api/drafts`
+- `/api/drafts/[id]`
+
+## Data and Security Model
+
+- User identity comes from server session only (`getSessionUserId`).
+- Client never supplies `userId`.
+- KV keys are namespaced per user:
+  - `style:${userId}`
+  - `drafts:${userId}:${draftId}`
+- Unauthenticated users are redirected to `/login`.
+- If KV is configured and style profile is missing, app routes redirect to `/style-setup`.
 
 ## Usage
 
-### 1. Set Up Your Style Profile
-
-1. Go to `/style-setup`
-2. Paste 5-10 of your past X posts
-3. Click "Analyze Style"
-4. Your style profile will be saved and used for all future generations
-
-### 2. Generate Posts
-
-**Prompted Mode:**
-- Enter a topic or angle
-- Select tone (Professional/Casual/Edgy)
-- Choose Single or Thread mode
-- Click "Generate Post"
-
-**Suggested Topics Mode:**
-- Switch to "Suggested Topics"
-- Click to load AI-tailored trending topics for your profile
-- Select a topic to generate
-
-### 3. Manage Drafts
-
-- All generated posts auto-save to Vercel KV (localStorage used as cache)
-- Pin important drafts
-- Search and filter by tone
-- Re-open drafts for editing
-
-### 4. Optimize Posts
-
-- Click "Hook & Hashtag Suggestions" after generation
-- Try alternative opening hooks
-- Add relevant hashtags
-
-## Architecture
-
-### Tech Stack
-
-- **Framework**: Next.js 14 (App Router)
-- **Styling**: Tailwind CSS
-- **AI**: NVIDIA NIM (Llama 3.3 70B) or Anthropic Claude
-- **Storage**: Vercel KV (server source of truth) + localStorage cache
-- **Deployment**: Vercel
-
-### Key Components
-
-- `/app/api/generate` - Main generation endpoint
-- `/app/api/analyze-style` - Style profile analysis
-- `/app/api/suggest-topics` - Trending topic suggestions
-- `lib/ai.ts` - AI provider abstraction
-- `lib/kv.ts` - Vercel KV helpers
-- `lib/prompts.ts` - Prompt templates
-
-## Current Status
-
-- Multi-user auth is implemented with NextAuth + Google OAuth.
-- App routes are protected behind login (`/login` for unauthenticated users).
-- Per-user KV namespacing is active:
-  - Style profile: `style:${userId}`
-  - Drafts: `drafts:${userId}:${draftId}`
-- API routes derive `userId` from server session only (never from client input).
-- Drafts use Vercel KV as source of truth with localStorage as client cache.
-- Onboarding redirect to `/style-setup` is enforced when KV is configured and style profile is missing.
-- Theme toggle is implemented with class-based dark/light mode and persisted in localStorage (`postcraft-theme`).
-
-## Performance Notes
-
-- **NIM API Response Time**: 30-60 seconds (free tier)
-- **Claude API Response Time**: 5-15 seconds (paid tier)
-- **Style Profile**: Stored in Vercel KV for persistence
-- **Drafts**: Stored in localStorage for instant access
+1. Sign in with Google.
+2. Complete style setup by pasting 5-10 sample posts.
+3. Generate a post or thread using prompted mode or suggested topics.
+4. Review saved content in `/history`.
+5. Optionally pin/delete entries and use hook/hashtag suggestions.
 
 ## Troubleshooting
 
-### "Analyzing..." stuck on Style Setup
+### Invalid header value during generation
 
-- The NIM API is slow (30-60 seconds) - this is normal for the free tier
-- Check your API key is correct
-- Try switching to Claude if you have an API key
+If you see an error like `Headers.append ... invalid header value`, your API key env value likely contains extra text or newlines.
 
-### No style profile being used
+- `NIM_API_KEY` must contain only the raw key value.
+- `AI_PROVIDER` must be set in its own separate variable.
+- Redeploy after fixing env vars.
 
-- Vercel KV is not available in local development
-- Style profile will work when deployed to Vercel
-- The app will still work with a default style profile
+### History not loading
+
+- Ensure `KV_REST_API_URL` and `KV_REST_API_TOKEN` are set.
+- Without KV, history APIs return `503` and UI shows a storage configuration error.
 
 ### Google login issues
 
-- Verify `NEXTAUTH_URL=http://localhost:3000` in local development.
-- Verify Google OAuth redirect URI includes:
-  - `http://localhost:3000/api/auth/callback/google`
-- Ensure `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are set.
+- Confirm `NEXTAUTH_URL` matches the deployed domain.
+- Confirm Google redirect URI matches exactly:
+  - `https://<your-domain>/api/auth/callback/google`
 
-### Generation errors
+### Slow generation
 
-- Check your API key is valid
-- Verify you have credits remaining
-- Try switching AI providers
+- NIM free tier can take 30-60 seconds.
+- Claude is usually faster but requires a valid Anthropic key.
 
 ## License
 
 MIT
-
-## Support
-
-For issues or questions, please open an issue on GitHub.
