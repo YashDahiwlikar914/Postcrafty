@@ -46,7 +46,7 @@ export default function AppSidebar() {
     <header className="w-full lg:w-72 glass-card p-4 lg:p-6 m-2 lg:m-4 flex flex-row lg:flex-col items-center lg:items-start justify-between lg:justify-start">
       <div className="mb-0 lg:mb-8 w-full flex items-center justify-between">
         <div>
-        <h1 className="text-2xl lg:text-3xl font-medium gradient-text mb-1 lg:mb-2">Postcraft</h1>
+        <h1 className="text-2xl lg:text-3xl font-medium gradient-text mb-1 lg:mb-2">Postcrafty</h1>
         <p className="text-xs lg:text-sm text-muted hidden lg:block">AI-powered content creation</p>
         </div>
         <ThemeToggle />

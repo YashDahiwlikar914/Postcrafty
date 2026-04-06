@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-const HISTORY_STORAGE_KEY = 'postcraft_history';
+const HISTORY_STORAGE_KEY = 'postcrafty_history';
+const LEGACY_HISTORY_STORAGE_KEY = 'postcraft_history';
 const LEGACY_DRAFTS_STORAGE_KEY = 'postcraft_drafts';
 
 interface Draft {
@@ -18,7 +19,10 @@ export default function DraftSidebar() {
 
   useEffect(() => {
     const loadDrafts = async () => {
-      const cached = localStorage.getItem(HISTORY_STORAGE_KEY) || localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
+      const cached =
+        localStorage.getItem(HISTORY_STORAGE_KEY) ||
+        localStorage.getItem(LEGACY_HISTORY_STORAGE_KEY) ||
+        localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
       if (cached) {
         try {
           const parsed = JSON.parse(cached);
@@ -27,6 +31,7 @@ export default function DraftSidebar() {
           }
         } catch {
           localStorage.removeItem(HISTORY_STORAGE_KEY);
+          localStorage.removeItem(LEGACY_HISTORY_STORAGE_KEY);
           localStorage.removeItem(LEGACY_DRAFTS_STORAGE_KEY);
         }
       }
@@ -37,6 +42,7 @@ export default function DraftSidebar() {
       setDrafts(data.drafts || []);
       const serialized = JSON.stringify(data.drafts || []);
       localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+      localStorage.setItem(LEGACY_HISTORY_STORAGE_KEY, serialized);
       localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
     };
 
@@ -53,6 +59,7 @@ export default function DraftSidebar() {
     setDrafts(updated);
     const serialized = JSON.stringify(updated);
     localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+    localStorage.setItem(LEGACY_HISTORY_STORAGE_KEY, serialized);
     localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
 
     const draft = updated.find((d) => d.id === id);
@@ -69,6 +76,7 @@ export default function DraftSidebar() {
     setDrafts(updated);
     const serialized = JSON.stringify(updated);
     localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+    localStorage.setItem(LEGACY_HISTORY_STORAGE_KEY, serialized);
     localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
     await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
   };

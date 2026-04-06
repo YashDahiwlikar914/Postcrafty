@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 
-const HISTORY_STORAGE_KEY = 'postcraft_history';
+const HISTORY_STORAGE_KEY = 'postcrafty_history';
+const LEGACY_HISTORY_STORAGE_KEY = 'postcraft_history';
 const LEGACY_DRAFTS_STORAGE_KEY = 'postcraft_drafts';
 
 interface HistoryItem {
@@ -14,7 +15,10 @@ interface HistoryItem {
 }
 
 function readCachedHistory(): HistoryItem[] {
-  const cached = localStorage.getItem(HISTORY_STORAGE_KEY) || localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
+  const cached =
+    localStorage.getItem(HISTORY_STORAGE_KEY) ||
+    localStorage.getItem(LEGACY_HISTORY_STORAGE_KEY) ||
+    localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
   if (!cached) {
     return [];
   }
@@ -24,6 +28,7 @@ function readCachedHistory(): HistoryItem[] {
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     localStorage.removeItem(HISTORY_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_HISTORY_STORAGE_KEY);
     localStorage.removeItem(LEGACY_DRAFTS_STORAGE_KEY);
     return [];
   }
@@ -32,6 +37,7 @@ function readCachedHistory(): HistoryItem[] {
 function writeCachedHistory(items: HistoryItem[]) {
   const serialized = JSON.stringify(items);
   localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+  localStorage.setItem(LEGACY_HISTORY_STORAGE_KEY, serialized);
   localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
 }
 

@@ -1,7 +1,7 @@
-# Postcraft — Agent Instructions
+# Postcrafty — Agent Instructions
 
 ## Project Scope
-- Postcraft is a multi-user X post generator for any niche/domain.
+- Postcrafty is a multi-user X post generator for any niche/domain.
 - Personalization comes from each user's style profile and session context.
 
 ## Source Of Truth
@@ -41,4 +41,4 @@
 - Use CSS variable tokens for all colors (no hardcoded hex/classes in components).
 - Keep glassmorphism only on cards/panels/sidebar; not on primary page background.
 - Buttons are solid emerald with void text.
-- Dark/light mode is class-based on `<html>` and persisted in `postcraft-theme`.
+- Dark/light mode is class-based on `<html>` and persisted in `postcrafty-theme`.

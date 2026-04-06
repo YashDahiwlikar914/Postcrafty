@@ -1,8 +1,8 @@
-# Postcraft — Project Plan
+# Postcrafty — Project Plan
 
 ## Overview
 
-Postcraft is a multi-user content dashboard for generating and managing X posts for any niche or audience. It supports prompted generation, AI-suggested topics, thread creation, tone control, style fingerprinting, hooks/hashtag suggestions, and per-user draft history.
+Postcrafty is a multi-user content dashboard for generating and managing X posts for any niche or audience. It supports prompted generation, AI-suggested topics, thread creation, tone control, style fingerprinting, hooks/hashtag suggestions, and per-user post history.
 
 The output should reflect each user's voice (via style profile), not generic assistant phrasing.
 
@@ -85,8 +85,8 @@ The output should reflect each user's voice (via style profile), not generic ass
 ### Hook + Hashtag Suggestions
 - Follow-up generation returns 3 hook alternatives + 3–5 hashtags.
 
-### Draft Management
-- Save/read/update/delete drafts via KV per user.
+### History Management
+- Save/read/update/delete history entries via KV per user.
 - localStorage mirrors server state as a client cache.
 
 ---
@@ -96,7 +96,7 @@ The output should reflect each user's voice (via style profile), not generic ass
 - Glassmorphism on cards/panels/sidebar only.
 - Background is solid with subtle radial depth (not glass).
 - Dark/light mode toggles via `<html class="dark|light">`.
-- Theme preference persisted in `localStorage['postcraft-theme']`.
+- Theme preference persisted in `localStorage['postcrafty-theme']`.
 - Buttons are solid emerald with void text.
 
 ---
@@ -106,7 +106,8 @@ The output should reflect each user's voice (via style profile), not generic ass
 - `/` — Generation panel
 - `/login` — Google sign-in
 - `/style-setup` — Style onboarding
-- `/drafts` — Draft management
+- `/history` — Post history management
+- `/drafts` — Legacy route redirecting to `/history`
 
 ### API Routes (Current)
 - `/api/auth/[...nextauth]`
@@ -124,4 +125,4 @@ The output should reflect each user's voice (via style profile), not generic ass
 - `npm run build` passes
 - Auth works locally with Google OAuth callback URI
 - Session-gated APIs reject unauthenticated access
-- Cross-user access to style/drafts is impossible by design
+- Cross-user access to style/history is impossible by design

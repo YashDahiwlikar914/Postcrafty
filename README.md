@@ -1,6 +1,6 @@
-# Postcraft
+# Postcrafty
 
-Postcraft is a multi-user X post generator for any niche. It uses each user's style profile to produce posts and threads that feel like their own voice.
+Postcrafty is a multi-user X post generator for any niche. It uses each user's style profile to produce posts and threads that feel like their own voice.
 
 ## Features
 

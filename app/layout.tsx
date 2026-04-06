@@ -5,7 +5,7 @@ import AppShell from '@/components/AppShell';
 import Script from 'next/script';
 
 export const metadata = {
-  title: 'Postcraft',
+  title: 'Postcrafty',
   description: 'Generate X posts in your authentic voice',
 };
 
@@ -24,7 +24,7 @@ export default function RootLayout({
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
         <Script id="theme-init" strategy="beforeInteractive">
-          {`(function(){try{var t=localStorage.getItem('postcraft-theme')||'dark';document.documentElement.classList.remove('dark','light');document.documentElement.classList.add(t);}catch(e){document.documentElement.classList.add('dark');}})();`}
+          {`(function(){try{var t=localStorage.getItem('postcrafty-theme')||localStorage.getItem('postcraft-theme')||'dark';document.documentElement.classList.remove('dark','light');document.documentElement.classList.add(t);localStorage.setItem('postcrafty-theme',t);}catch(e){document.documentElement.classList.add('dark');}})();`}
         </Script>
       </head>
       <body className={`${lexend.className} antialiased`}>

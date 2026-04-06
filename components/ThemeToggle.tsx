@@ -5,10 +5,21 @@ import { useEffect, useState } from 'react';
 
 type Theme = 'dark' | 'light';
 
+const THEME_STORAGE_KEY = 'postcrafty-theme';
+const LEGACY_THEME_STORAGE_KEY = 'postcraft-theme';
+
 export default function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>('dark');
 
   useEffect(() => {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY) || localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
+    if (saved === 'light' || saved === 'dark') {
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(saved);
+      setTheme(saved);
+      return;
+    }
+
     const current = document.documentElement.classList.contains('light') ? 'light' : 'dark';
     setTheme(current);
   }, []);
@@ -17,7 +28,8 @@ export default function ThemeToggle() {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
     document.documentElement.classList.remove('dark', 'light');
     document.documentElement.classList.add(next);
-    localStorage.setItem('postcraft-theme', next);
+    localStorage.setItem(THEME_STORAGE_KEY, next);
+    localStorage.setItem(LEGACY_THEME_STORAGE_KEY, next);
     setTheme(next);
   };
 
