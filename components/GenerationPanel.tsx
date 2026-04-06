@@ -7,6 +7,9 @@ import ThreadView from './ThreadView';
 import OutputCard from './OutputCard';
 import TopicSuggestions from './TopicSuggestions';
 
+const HISTORY_STORAGE_KEY = 'postcraft_history';
+const LEGACY_DRAFTS_STORAGE_KEY = 'postcraft_drafts';
+
 export default function GenerationPanel() {
   const [topic, setTopic] = useState('');
   const [tone, setTone] = useState('Professional');
@@ -25,9 +28,23 @@ export default function GenerationPanel() {
     if (!response.ok) return;
 
     const data = await response.json();
-    const drafts = JSON.parse(localStorage.getItem('postcraft_drafts') || '[]');
+    let drafts: Array<{ id: string; content: string; tone: string; timestamp: number; pinned: boolean }> = [];
+
+    try {
+      const cached = localStorage.getItem(HISTORY_STORAGE_KEY) || localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY) || '[]';
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed)) {
+        drafts = parsed;
+      }
+    } catch {
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
+      localStorage.removeItem(LEGACY_DRAFTS_STORAGE_KEY);
+    }
+
     drafts.unshift(data.draft);
-    localStorage.setItem('postcraft_drafts', JSON.stringify(drafts.slice(0, 100)));
+    const serialized = JSON.stringify(drafts.slice(0, 100));
+    localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+    localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
   };
 
   const handleGenerate = async () => {

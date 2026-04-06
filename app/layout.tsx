@@ -6,7 +6,7 @@ import Script from 'next/script';
 
 export const metadata = {
   title: 'Postcraft',
-  description: 'Generate cybersecurity and personal brand X posts in your voice',
+  description: 'Generate X posts in your authentic voice',
 };
 
 const lexend = Lexend({ 

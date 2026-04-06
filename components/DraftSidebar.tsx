@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 
+const HISTORY_STORAGE_KEY = 'postcraft_history';
+const LEGACY_DRAFTS_STORAGE_KEY = 'postcraft_drafts';
+
 interface Draft {
   id: string;
   content: string;
@@ -15,16 +18,26 @@ export default function DraftSidebar() {
 
   useEffect(() => {
     const loadDrafts = async () => {
-      const cached = localStorage.getItem('postcraft_drafts');
+      const cached = localStorage.getItem(HISTORY_STORAGE_KEY) || localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
       if (cached) {
-        setDrafts(JSON.parse(cached));
+        try {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed)) {
+            setDrafts(parsed);
+          }
+        } catch {
+          localStorage.removeItem(HISTORY_STORAGE_KEY);
+          localStorage.removeItem(LEGACY_DRAFTS_STORAGE_KEY);
+        }
       }
 
       const response = await fetch('/api/drafts');
       if (!response.ok) return;
       const data = await response.json();
       setDrafts(data.drafts || []);
-      localStorage.setItem('postcraft_drafts', JSON.stringify(data.drafts || []));
+      const serialized = JSON.stringify(data.drafts || []);
+      localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+      localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
     };
 
     loadDrafts();
@@ -38,7 +51,9 @@ export default function DraftSidebar() {
       d.id === id ? { ...d, pinned: !d.pinned } : d
     );
     setDrafts(updated);
-    localStorage.setItem('postcraft_drafts', JSON.stringify(updated));
+    const serialized = JSON.stringify(updated);
+    localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+    localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
 
     const draft = updated.find((d) => d.id === id);
     if (!draft) return;
@@ -52,7 +67,9 @@ export default function DraftSidebar() {
   const deleteDraft = async (id: string) => {
     const updated = drafts.filter(d => d.id !== id);
     setDrafts(updated);
-    localStorage.setItem('postcraft_drafts', JSON.stringify(updated));
+    const serialized = JSON.stringify(updated);
+    localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+    localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
     await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
   };
 
@@ -65,7 +82,7 @@ export default function DraftSidebar() {
           </svg>
         </div>
         <div>
-          <h2 className="text-xl font-medium heading-text">Drafts</h2>
+          <h2 className="text-xl font-medium heading-text">History</h2>
           <p className="text-sm text-muted">{drafts.length} saved</p>
         </div>
       </div>
@@ -116,7 +133,7 @@ export default function DraftSidebar() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
               </svg>
             </div>
-            <p className="text-sm text-muted">No drafts yet</p>
+            <p className="text-sm text-muted">No history yet</p>
             <p className="text-xs text-muted/70">Generate your first post</p>
           </div>
         )}

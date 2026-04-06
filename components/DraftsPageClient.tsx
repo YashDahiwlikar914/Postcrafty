@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from 'react';
 
-interface Draft {
+const HISTORY_STORAGE_KEY = 'postcraft_history';
+const LEGACY_DRAFTS_STORAGE_KEY = 'postcraft_drafts';
+
+interface HistoryItem {
   id: string;
   content: string;
   tone: string;
@@ -10,49 +13,114 @@ interface Draft {
   pinned: boolean;
 }
 
+function readCachedHistory(): HistoryItem[] {
+  const cached = localStorage.getItem(HISTORY_STORAGE_KEY) || localStorage.getItem(LEGACY_DRAFTS_STORAGE_KEY);
+  if (!cached) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(cached);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    localStorage.removeItem(HISTORY_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_DRAFTS_STORAGE_KEY);
+    return [];
+  }
+}
+
+function writeCachedHistory(items: HistoryItem[]) {
+  const serialized = JSON.stringify(items);
+  localStorage.setItem(HISTORY_STORAGE_KEY, serialized);
+  localStorage.setItem(LEGACY_DRAFTS_STORAGE_KEY, serialized);
+}
+
 export default function DraftsPageClient() {
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const loadDrafts = async () => {
-      const cached = localStorage.getItem('postcraft_drafts');
-      if (cached) {
-        setDrafts(JSON.parse(cached));
+    const loadHistory = async () => {
+      const cachedHistory = readCachedHistory();
+      if (cachedHistory.length > 0) {
+        setHistory(cachedHistory);
       }
 
-      const response = await fetch('/api/drafts');
-      if (!response.ok) return;
-      const data = await response.json();
-      setDrafts(data.drafts || []);
-      localStorage.setItem('postcraft_drafts', JSON.stringify(data.drafts || []));
+      try {
+        const response = await fetch('/api/drafts');
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({}));
+          setError(body.error || 'Unable to load history right now.');
+          return;
+        }
+
+        const data = await response.json();
+        const nextHistory = data.drafts || [];
+        setHistory(nextHistory);
+        writeCachedHistory(nextHistory);
+      } catch {
+        setError('Unable to load history right now.');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    loadDrafts();
+    loadHistory();
   }, []);
 
   const togglePin = async (id: string) => {
-    const updated = drafts.map((d) => (d.id === id ? { ...d, pinned: !d.pinned } : d));
-    setDrafts(updated);
-    localStorage.setItem('postcraft_drafts', JSON.stringify(updated));
+    setError('');
+    const previous = history;
+    const updated = history.map((item) => (item.id === id ? { ...item, pinned: !item.pinned } : item));
+    setHistory(updated);
+    writeCachedHistory(updated);
 
-    const draft = updated.find((d) => d.id === id);
-    if (!draft) return;
-    await fetch(`/api/drafts/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pinned: draft.pinned }),
-    });
+    const target = updated.find((item) => item.id === id);
+    if (!target) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/drafts/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pinned: target.pinned }),
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to update history item.');
+      }
+    } catch (err) {
+      setHistory(previous);
+      writeCachedHistory(previous);
+      setError(err instanceof Error ? err.message : 'Failed to update history item.');
+    }
   };
 
   const deleteDraft = async (id: string) => {
-    const updated = drafts.filter((d) => d.id !== id);
-    setDrafts(updated);
-    localStorage.setItem('postcraft_drafts', JSON.stringify(updated));
-    await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
+    setError('');
+    const previous = history;
+    const updated = history.filter((item) => item.id !== id);
+    setHistory(updated);
+    writeCachedHistory(updated);
+
+    try {
+      const response = await fetch(`/api/drafts/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Failed to delete history item.');
+      }
+    } catch (err) {
+      setHistory(previous);
+      writeCachedHistory(previous);
+      setError(err instanceof Error ? err.message : 'Failed to delete history item.');
+    }
   };
 
-  const pinned = drafts.filter((d) => d.pinned);
-  const recent = drafts.filter((d) => !d.pinned);
+  const pinned = history.filter((item) => item.pinned);
+  const recent = history.filter((item) => !item.pinned);
 
   return (
     <div className="p-2 lg:p-4">
@@ -64,10 +132,16 @@ export default function DraftsPageClient() {
             </svg>
           </div>
           <div>
-            <h1 className="text-4xl font-medium gradient-text">Drafts</h1>
-            <p className="text-muted">Manage your saved content</p>
+            <h1 className="text-4xl font-medium gradient-text">History</h1>
+            <p className="text-muted">Review your saved posts</p>
           </div>
         </div>
+
+        {error && (
+          <div className="glass-card p-4 mb-6 border border-border/70">
+            <p className="text-sm text-mint">{error}</p>
+          </div>
+        )}
 
         <div className="space-y-8">
           {pinned.length > 0 && (
@@ -87,27 +161,33 @@ export default function DraftsPageClient() {
           )}
 
           <div>
-            <h2 className="text-xl font-medium heading-text mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-signal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Recent
-            </h2>
-            <div className="grid gap-4">
-              {recent.map((draft) => (
-                <DraftCard key={draft.id} draft={draft} onPin={() => togglePin(draft.id)} onDelete={() => deleteDraft(draft.id)} />
+              <h2 className="text-xl font-medium heading-text mb-4 flex items-center gap-2">
+                <svg className="w-5 h-5 text-signal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recent
+              </h2>
+              <div className="grid gap-4">
+              {recent.map((item) => (
+                <DraftCard key={item.id} draft={item} onPin={() => togglePin(item.id)} onDelete={() => deleteDraft(item.id)} />
               ))}
+              </div>
             </div>
-          </div>
 
-          {drafts.length === 0 && (
+          {loading && history.length === 0 && (
+            <div className="glass-card p-8 text-center">
+              <p className="text-muted">Loading history...</p>
+            </div>
+          )}
+
+          {!loading && history.length === 0 && (
             <div className="glass-card p-12 text-center">
               <div className="w-16 h-16 rounded-2xl bg-panel/50 flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
               </div>
-              <h3 className="text-xl font-medium heading-text mb-2">No drafts yet</h3>
+              <h3 className="text-xl font-medium heading-text mb-2">No history yet</h3>
               <p className="text-muted">Generate your first post to get started</p>
             </div>
           )}
@@ -117,7 +197,7 @@ export default function DraftsPageClient() {
   );
 }
 
-function DraftCard({ draft, onPin, onDelete }: { draft: Draft; onPin: () => void; onDelete: () => void }) {
+function DraftCard({ draft, onPin, onDelete }: { draft: HistoryItem; onPin: () => void; onDelete: () => void }) {
   return (
     <div className="glass-card p-6 hover:border-border/50 transition-all group">
       <div className="flex items-start justify-between mb-4">
