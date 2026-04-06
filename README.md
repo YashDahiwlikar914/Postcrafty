@@ -1,8 +1,6 @@
----
-
 # Postcrafty
 
-Multi-user X post generator. Each user gets their own style profile, so generated posts actually sound like them and not like a language model cosplaying as a human.
+Vibe coded. Multi-user X post generator where each user gets their own style profile, so generated posts actually sound like them and not like a language model cosplaying as a human.
 
 ## What it does
 
@@ -33,7 +31,7 @@ AI_PROVIDER=nim
 NIM_API_KEY=your_nvidia_nim_api_key
 ANTHROPIC_API_KEY=your_anthropic_api_key
 NEXTAUTH_SECRET=your_random_secret
-NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_URL=http://localhost:3000 or https://<your-domain>
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 KV_REST_API_URL=your_vercel_kv_rest_api_url
@@ -62,6 +60,10 @@ In Google Cloud Console, create an OAuth Web Client and add these redirect URIs:
 
 - Local: `http://localhost:3000/api/auth/callback/google`
 - Production: `https://<your-domain>/api/auth/callback/google`
+
+Also add Authorised JavaScript origins:
+- Local: `http://localhost:3000`
+- Production: `https://<your-domain>`
 
 `NEXTAUTH_URL` has to match the base URL exactly, per environment.
 
